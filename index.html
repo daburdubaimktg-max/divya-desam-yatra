@@ -4,11 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Divya Desam">
 <title>Divya Desam Yatra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mukta:wght@400;600&family=Noto+Serif+Tamil:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" crossorigin="anonymous"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#6d1422">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<script src="vendor/leaflet.js"></script>
 <style>
 /* Leaflet 1.9.4 CSS (BSD-2) */
 /* required styles */
@@ -822,6 +829,11 @@ nav a.on{color:var(--accent)}
 .qopt{text-align:left;padding:11px 12px;font-size:1rem}
 .qopt.ok{background:#2f7a3a;color:#fff;border-color:#2f7a3a}.qopt.no{background:#a3253a;color:#fff;border-color:#a3253a}
 
+/* ---------- GitHub Pages / installed app additions (v5.1) ---------- */
+#lmap.has-tiles .stlbl,#lmap.has-tiles .citylbl{display:none}
+.updbar{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:3000;max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border:1px solid var(--gold);border-radius:12px;background:var(--head);color:var(--headink);font:600 16px/1.3 var(--body);box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
+.updbar:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
 </style>
 </head>
 <body>
@@ -831,6 +843,13 @@ nav a.on{color:var(--accent)}
 <nav aria-label="Sections"></nav>
 </div>
 <script>
+/* ---------- site settings (GitHub Pages build) ---------- */
+// Where "Send by email" goes. Leave '' to open a blank email that the reviewer addresses themselves.
+const CORRECTIONS_EMAIL = '';
+// Repository address for the "Report on GitHub" link, e.g. 'https://github.com/someone/divya-desam-yatra'.
+// Leave '' to work it out from the address when the app runs on <someone>.github.io/<repository>/.
+const REPO_URL = '';
+
 /* 108 Divya Desams — core records.
    Columns: n|name|tamil|popular name / place|district|state|perumal|thayar|posture|azhwars|form|groups|pearl
    posture: N standing, I sitting, K reclining, D striding.  azhwars: code+count.
@@ -2827,7 +2846,7 @@ const BASEMAP = {"countries":{"type":"FeatureCollection","features":[{"type":"Fe
 
 /* Divya Desam Yatra — app logic. No framework. State lives in localStorage and, when the page
    is opened as a Claude artifact, is mirrored to the signed-in viewer's private store. */
-const APP_VERSION = '5.0 (17 Nov 2026)';
+const APP_VERSION = '5.1 (17 Nov 2026)';
 const SHORT = {};
 SHORT_RAW.trim().split('\n').forEach(l => { const [n,bk,bl,story,see,when] = l.split('|'); SHORT[+n] = {bk:bk.split(' '),bl,story,see:see.split(';'),when}; });
 Object.entries(BLESS_DEEP).forEach(([n,[bk,bl]]) => { SHORT[n] = Object.assign(SHORT[n]||{}, {bk:bk.split(' '),bl}); });
@@ -3086,8 +3105,9 @@ function vMe(){
    <p class="small muted" style="margin:10px 0 0">Your diary is stored: ${esc(cloudState)}. Each person who opens this app has a separate diary.</p></div>
   <h3>My yatra so far</h3><p class="muted small">${visited()} of 106 visited · ${T.filter(t=>D(t.n).s==='w').length} on the wish list</p>
   <div class="list">${list.map(t=>`<a class="t" href="#t-${t.n}"><span class="n">${t.n}</span><span><b>${esc(t.name)}</b><span class="sub">${D(t.n).d?esc(D(t.n).d)+' · ':''}${esc((D(t.n).note||'').slice(0,90))}</span></span><span class="side">${statusPill(t.n)}</span></a>`).join('')||'<p class="muted">Nothing marked yet. Open a temple and tap Mark visited.</p>'}</div>
-  <h3>Backup</h3><div class="box"><p class="small">Copy your diary as text to keep it safe or move it to another device. To restore, paste a backup below and tap Restore.</p><div class="row"><button id="bk">Copy my diary backup</button><button id="rs">Restore from pasted backup</button></div><textarea id="copybox" style="margin-top:8px" placeholder="Paste a backup here to restore" aria-label="Backup text"></textarea></div>
-  <h3>My corrections and feedback (${S.fb.length})</h3><div class="box">${S.fb.length?`<ul>${S.fb.map((f,i)=>`<li><b>${f.n?esc(f.n+'. '+byN(f.n).name):'General'}</b>: ${esc(f.text)} <button data-del="${i}" class="small" aria-label="Delete this correction">Delete</button></li>`).join('')}</ul><div class="row"><button id="fbc" class="pri">Copy all to send</button></div><p class="small muted" style="margin:8px 0 0">Paste into WhatsApp or email to the person who shared this app with you.</p>`:'<p class="muted" style="margin:0">Corrections you save on temple pages appear here.</p>'}
+  <h3>Backup</h3><div class="box"><p class="small">Copy your diary as text to keep it safe or move it to another device. To restore, paste a backup below and tap Restore.</p><div class="row"><button id="bk">Copy my diary backup</button><button id="rs">Restore from pasted backup</button></div><textarea id="copybox" style="margin-top:8px" placeholder="Paste a backup here to restore" aria-label="Backup text"></textarea>
+   <p class="small" style="margin:12px 0 6px">Or keep the backup as a file, for example in Files or iCloud Drive.</p><div class="row"><button id="bkf">Download backup as file</button><button id="rsf">Restore from file</button></div><input type="file" id="rsfile" accept=".json,application/json,text/plain" hidden aria-label="Choose a backup file"></div>
+  <h3>My corrections and feedback (${S.fb.length})</h3><div class="box">${S.fb.length?`<ul>${S.fb.map((f,i)=>`<li><b>${f.n?esc(f.n+'. '+byN(f.n).name):'General'}</b>: ${esc(f.text)} <button data-del="${i}" class="small" aria-label="Delete this correction">Delete</button></li>`).join('')}</ul><div class="row"><button id="fbc" class="pri">Copy all to send</button></div><p class="small muted" style="margin:8px 0 0">Paste into WhatsApp or email to the person who shared this app with you.</p><div class="links" style="margin-top:8px"><a href="${esc(correctionsMailto())}">Send by email</a>${repoUrl()?`<a href="${esc(repoUrl())}/issues" target="_blank" rel="noopener">Report on GitHub (Issues)</a>`:''}</div>`:'<p class="muted" style="margin:0">Corrections you save on temple pages appear here.</p>'}
    <label for="fbg">General feedback</label><textarea id="fbg" placeholder="Ideas, missing features, things that are hard to use"></textarea><div class="row" style="margin-top:8px"><button id="fbgs">Save feedback</button></div></div>
   <p style="margin-top:16px"><a href="#about">Sources and acknowledgements</a> · Version ${APP_VERSION}</p>`;
 }
@@ -3184,9 +3204,10 @@ function bind(r){
     $('#pw').addEventListener('input',e=>{S.profile.withWhom=e.target.value; save();});
     $('#tg').addEventListener('click',()=>{S.profile.gaudiya=!S.profile.gaudiya; save(); render();});
     $('#tb').addEventListener('click',()=>{S.profile.big=!S.profile.big; save(); render();});
-    $('#bk').addEventListener('click',()=>copy(JSON.stringify({app:'divyadesam-yatra',profile:S.profile,diary:S.diary,fb:S.fb}),'Backup copied'));
-    $('#rs').addEventListener('click',()=>{ try{ const o=JSON.parse($('#copybox').value); if(o.app!=='divyadesam-yatra') throw 0; S.profile=Object.assign(S.profile,o.profile||{}); S.diary=o.diary||{}; S.fb=o.fb||S.fb; save(); render(); toast('Diary restored'); }catch(e){ toast('That text is not a backup from this app'); } });
-    const fc=$('#fbc'); if(fc) fc.addEventListener('click',()=>copy('Divya Desam Yatra app – corrections from '+(S.profile.name||'a devotee')+'\n\n'+S.fb.map(f=>(f.n?f.n+'. '+byN(f.n).name:'General')+': '+f.text).join('\n\n'),'Corrections copied'));
+    $('#bk').addEventListener('click',()=>copy(backupText(),'Backup copied'));
+    $('#rs').addEventListener('click',()=>restoreBackup($('#copybox').value));
+    bindMeFiles();
+    const fc=$('#fbc'); if(fc) fc.addEventListener('click',()=>copy(correctionsText(),'Corrections copied'));
     document.querySelectorAll('[data-del]').forEach(x=>x.addEventListener('click',()=>{S.fb.splice(+x.dataset.del,1); save(); pushFeedback(); render();}));
     $('#fbgs').addEventListener('click',async()=>{ const v=$('#fbg').value.trim(); if(!v) return; S.fb.push({n:0,text:v,t:Date.now()}); save(); await pushFeedback(); render(); toast('Feedback saved'); });
   }
@@ -3204,9 +3225,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 /* ---------- zoomable map (v4) ----------
    Leaflet with an offline vector base (coastline, countries, Indian state lines) because a Claude
-   artifact may not load map tiles. On GitHub Pages, set MAP_TILES to an OpenStreetMap tile URL to
-   add street detail (see HANDOVER). Every pin links to Google Maps for live navigation. */
-const MAP_TILES = '';   // e.g. 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' on GitHub Pages
+   artifact may not load map tiles. On GitHub Pages MAP_TILES adds OpenStreetMap street detail on
+   top of that base when there is a network; with no network (inside a temple) the vector base and
+   the app's own labels show through, plus any tiles already viewed (kept by sw.js).
+   Every pin links to Google Maps for live navigation. */
+const MAP_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';   // OpenStreetMap street detail when online; '' = offline vector base only
 const STATE_LABELS=[['Tamil Nadu',11.0,78.3],['Kerala',10.1,76.55],['Karnataka',14.6,75.9],['Andhra Pradesh',15.6,79.2],['Telangana',17.9,79.1],['Maharashtra',19.5,76.0],['Gujarat',22.6,71.5],['Uttar Pradesh',26.9,80.6],['Uttarakhand',30.1,79.2],['Nepal',28.3,84.0],['Sri Lanka',7.8,80.7],['Arabian Sea',14.5,70.5],['Bay of Bengal',15.0,86.5]];
 const MAP_PLACES=[['Chennai',13.08,80.27],['Tiruchirappalli',10.79,78.70],['Madurai',9.93,78.12],['Kochi',9.97,76.28],['Thiruvananthapuram',8.52,76.94],['Kumbakonam',10.96,79.38],['Tirunelveli',8.73,77.70],['Tirupati',13.63,79.42],['Kanchipuram',12.83,79.70],['Delhi',28.61,77.21],['Mumbai',19.08,72.88],['Bengaluru',12.97,77.59],['Hyderabad',17.39,78.49],['Kathmandu',27.72,85.32],['Lucknow',26.85,80.95],['Haridwar',29.95,78.16],['Mayiladuthurai',11.10,79.65],['Thanjavur',10.79,79.14],['Chengannur',9.32,76.61],['Nagercoil',8.18,77.41],['Thrissur',10.53,76.21],['Sirkazhi',11.24,79.74],['Nagapattinam',10.77,79.84],['Pokhara',28.21,83.99],['Mathura',27.49,77.67],['Dwarka',22.24,68.97],['Rameswaram',9.29,79.31]];
 const MAP_SETS={all:['All 106',()=>T.filter(t=>t.n<=106).map(t=>t.n)],south:['South India',()=>T.filter(t=>t.n<=95).map(t=>t.n)],delta:['Kaveri delta',()=>T.filter(t=>t.n<=40&&!t.grp.includes('NG')).map(t=>t.n)],nangur:['Thirunangur eleven',()=>T.filter(t=>t.grp.includes('NG')).map(t=>t.n).concat([28,34])],kanchi:['Kanchi and Chennai',()=>T.filter(t=>t.n>=43&&t.n<=64).map(t=>t.n)],tamra:['Nava Tirupati and far south',()=>T.filter(t=>t.n>=75&&t.n<=88).map(t=>t.n)],kerala:['Kerala',()=>T.filter(t=>t.n>=65&&t.n<=74).map(t=>t.n)],pandya:['Madurai region',()=>T.filter(t=>t.n>=88&&t.n<=95).map(t=>t.n)],north:['North and Nepal',()=>T.filter(t=>t.n>=96&&t.n<=104).map(t=>t.n)],andhra:['Tirumala and Ahobilam',()=>[105,106]]};
@@ -3246,11 +3269,13 @@ function pinIcon(n){ const s=D(n).s; return L.divIcon({className:'', iconSize:[3
 function mapInit(){
   const el=$('#lmap'); if(!el||!window.L) return;
   LMAP=L.map(el,{zoomSnap:0.5,minZoom:4,maxZoom:16,attributionControl:true,worldCopyJump:false,maxBounds:[[-5,55],[42,105]]});
-  if(MAP_TILES){ L.tileLayer(MAP_TILES,{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(LMAP); }
-  else {
-    L.geoJSON(BASEMAP.countries,{interactive:false,style:f=>({color:'#b59a72',weight:0.8,fillColor:f.properties.n==='India'?'#f6ead2':'#ece3d3',fillOpacity:1})}).addTo(LMAP);
-    L.geoJSON({type:'Feature',geometry:BASEMAP.states},{interactive:false,style:{color:'#c4a27a',weight:0.7,dashArray:'3 3',fill:false}}).addTo(LMAP);
-    LMAP.attributionControl.addAttribution('Boundaries: Natural Earth (via world-atlas, datamaps)');
+  // offline vector base is always drawn; street tiles (when reachable) cover it
+  L.geoJSON(BASEMAP.countries,{interactive:false,style:f=>({color:'#b59a72',weight:0.8,fillColor:f.properties.n==='India'?'#f6ead2':'#ece3d3',fillOpacity:1})}).addTo(LMAP);
+  L.geoJSON({type:'Feature',geometry:BASEMAP.states},{interactive:false,style:{color:'#c4a27a',weight:0.7,dashArray:'3 3',fill:false}}).addTo(LMAP);
+  LMAP.attributionControl.addAttribution('Boundaries: Natural Earth (via world-atlas, datamaps)');
+  if(MAP_TILES && location.protocol.indexOf('http')===0){
+    const tiles=L.tileLayer(MAP_TILES,{maxZoom:19,crossOrigin:true,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(LMAP);
+    tiles.on('tileload',()=>el.classList.add('has-tiles'));   // hide the app's own state and city labels once real tiles are showing
   }
   STATE_LABELS.forEach(([s,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:'stlbl',iconSize:[120,16],iconAnchor:[60,8],html:esc(s)})}).addTo(LMAP));
   MAP_PLACES.forEach(([s,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:'citylbl',iconSize:[110,14],iconAnchor:[-4,7],html:'<i></i>'+esc(s)})}).addTo(LMAP));
@@ -3265,7 +3290,7 @@ function mapInit(){
   LMAP.fitBounds(viewBounds(MVIEW)); zoomCls();
   document.querySelectorAll('[data-mv]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault(); MVIEW=a.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===a)); LMAP.flyToBounds(viewBounds(MVIEW),{duration:0.6});}));
   const dl=async(kind)=>{ const msg=$('#dl-msg'); const data=kind==='kml'?buildKML():buildCSV(); const filename='Divya Desam Yatra - 108 temples.'+kind;
-    try{ const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null; if(!d) throw new Error('none'); await d.save({filename,data}); msg.textContent='Saved '+filename+'.'; }
+    try{ await saveFile(filename,data,kind==='kml'?'application/vnd.google-earth.kml+xml':'text/csv'); msg.textContent='Saved '+filename+'.'; }
     catch(e){ copy(data, kind.toUpperCase()+' copied. Paste into a new file named '+filename); msg.textContent='Download is not available here, so the file was copied instead. Paste it into a text file named '+filename+'.'; } };
   $('#dl-kml').addEventListener('click',()=>dl('kml')); $('#dl-csv').addEventListener('click',()=>dl('csv'));
 }
@@ -3326,7 +3351,7 @@ function bindChecklist(){
   document.querySelectorAll('[data-ck]').forEach(c=>c.addEventListener('change',()=>{ const n=+c.dataset.ck; setD(n,{s:c.checked?'v':'', d:D(n).d||''}); toast(c.checked?'Marked visited':'Unmarked'); }));
   $('#ck-copy').addEventListener('click',()=>copy(checklistText(),'Checklist copied'));
   $('#ck-dl').addEventListener('click',async()=>{ const data='Number,Divya Desam,Place,Region,Visited,Date\n'+T.filter(t=>t.n<=106).map(t=>[t.n,t.name,t.aka,t.reg,D(t.n).s==='v'?'Yes':'',D(t.n).d||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-    try{ const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null; if(!d) throw 0; await d.save({filename:'Divya Desam checklist.csv',data}); }catch(e){ copy(data,'Download not available here; copied instead'); } });
+    try{ await saveFile('Divya Desam checklist.csv',data,'text/csv'); }catch(e){ copy(data,'Download not available here; copied instead'); } });
 }
 /* ---------- quiz ---------- */
 let QZ=null;
@@ -3355,6 +3380,72 @@ function bindQuiz(){
   document.querySelectorAll('[data-qo]').forEach(b=>b.addEventListener('click',()=>{ const z=QZ; if(z.picked>=0) return; z.picked=+b.dataset.qo; z.asked++; if(z.picked===z.q.a){ z.score++; if(z.q.n){ S.learnt=S.learnt||{}; S.learnt[z.q.n]=1; save(); } } render(); }));
   const nx=$('#qnext'); if(nx) nx.addEventListener('click',()=>{ QZ.q=makeQ(); QZ.picked=-1; render(); });
 }
+
+/* ---------- files, corrections links, offline install (v5.1, GitHub Pages) ----------
+   Everything here is harmless inside the Claude artifact and when index.html is opened from disk. */
+function repoUrl(){
+  if(REPO_URL) return REPO_URL.replace(/\/+$/,'');
+  const m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i), seg = location.pathname.split('/').filter(Boolean)[0];
+  return m ? 'https://github.com/'+m[1]+'/'+(seg && !/\.html?$/i.test(seg) ? seg : m[1]+'.github.io') : '';
+}
+/* Save text as a file. In the Claude artifact this uses its downloads capability (and throws if that
+   is missing, so callers fall back to copying). Everywhere else it is an ordinary browser download;
+   in an app added to the iPhone home screen it opens the share sheet (Save to Files). */
+async function saveFile(filename, data, mime){
+  if(window.claude && window.claude.use){
+    const d = await window.claude.use('downloads'); if(!d) throw new Error('downloads not available');
+    await d.save({filename, data}); return;
+  }
+  const blob = new Blob([data], {type:(mime||'text/plain')+';charset=utf-8'});
+  if(navigator.standalone === true && navigator.canShare){
+    try{ const f = new File([blob], filename, {type:blob.type});
+      if(navigator.canShare({files:[f]})){ await navigator.share({files:[f]}); return; }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const a = document.createElement('a'), url = URL.createObjectURL(blob);
+  a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 10000);
+}
+const backupText = () => JSON.stringify({app:'divyadesam-yatra',profile:S.profile,diary:S.diary,fb:S.fb});
+function restoreBackup(text){
+  try{ const o = JSON.parse(text); if(!o || o.app!=='divyadesam-yatra') throw 0;
+    S.profile = Object.assign(S.profile, o.profile||{}); S.diary = o.diary||{}; S.fb = o.fb||S.fb; save(); render(); toast('Diary restored'); return true; }
+  catch(e){ toast('That is not a backup from this app'); return false; }
+}
+const correctionsText = () => 'Divya Desam Yatra app – corrections from '+(S.profile.name||'a devotee')+'\n\n'+S.fb.map(f=>(f.n?f.n+'. '+byN(f.n).name:'General')+': '+f.text).join('\n\n');
+function correctionsMailto(){
+  let body = correctionsText(); // some mail apps refuse very long links
+  if(body.length > 1700) body = body.slice(0,1700)+'\n\n[List shortened. Please also use "Copy all to send" in the app and paste the full list here.]';
+  return 'mailto:'+encodeURIComponent(CORRECTIONS_EMAIL)+'?subject='+encodeURIComponent('Divya Desam Yatra: corrections')+'&body='+encodeURIComponent(body);
+}
+function bindMeFiles(){
+  const b=(id,ev,fn)=>{const el=$(id); if(el) el.addEventListener(ev,fn);};
+  b('#bkf','click',async()=>{ const name='divya-desam-yatra-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    try{ await saveFile(name, backupText(), 'application/json'); toast('Backup file saved'); }catch(e){ copy(backupText(),'Download not available here; backup copied instead'); } });
+  b('#rsf','click',()=>{ const f=$('#rsfile'); if(f){ f.value=''; f.click(); } });
+  b('#rsfile','change',e=>{ const f=e.target.files && e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>restoreBackup(String(r.result||'')); r.onerror=()=>toast('Could not read that file'); r.readAsText(f); });
+}
+/* Offline: register the service worker (https or localhost only) and offer a refresh when a new version is ready. */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol!=='https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  const hadController = !!navigator.serviceWorker.controller; let reloading = false;
+  function offer(reg){
+    if(!reg.waiting || !navigator.serviceWorker.controller || document.getElementById('updbar')) return;
+    const b = document.createElement('button'); b.id='updbar'; b.className='updbar'; b.type='button'; b.textContent='Update available, tap to refresh';
+    b.addEventListener('click',()=>{ b.textContent='Updating…'; if(reg.waiting) reg.waiting.postMessage('SKIP_WAITING'); else location.reload(); });
+    document.body.appendChild(b);
+  }
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      offer(reg);
+      reg.addEventListener('updatefound',()=>{ const w=reg.installing; if(w) w.addEventListener('statechange',()=>{ if(w.state==='installed') offer(reg); }); });
+      document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(!hadController || reloading) return; reloading=true; location.reload(); });
+})();
 
 </script>
 </body>

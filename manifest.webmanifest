@@ -1,0 +1,18 @@
+{
+  "name": "Divya Desam Yatra",
+  "short_name": "Divya Desam",
+  "description": "A not-for-profit pilgrim's companion for the 108 Divya Desams, the Vishnu temples sung by the Azhwars.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "en",
+  "background_color": "#fbf4e6",
+  "theme_color": "#6d1422",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Original icon for Divya Desam Yatra: a simple gopuram (temple gateway tower) in the app's teal and gold. -->
+  <rect width="512" height="512" fill="#0f6e73"/>
+  <g fill="#e8b548">
+    <!-- finials (kalasams) -->
+    <path d="M222 126l6-22 6 22zM250 122l6-26 6 26zM278 126l6-22 6 22z"/>
+    <circle cx="228" cy="128" r="8"/><circle cx="256" cy="125" r="9"/><circle cx="284" cy="128" r="8"/>
+    <!-- barrel roof -->
+    <path d="M196 180v-12q0-30 60-30t60 30v12z"/>
+    <!-- tiers -->
+    <path d="M204 188h104l8 36H196z"/>
+    <path d="M190 232h132l8 38H182z"/>
+    <path d="M176 278h160l8 40H168z"/>
+    <path d="M162 326h188l8 42H154z"/>
+    <!-- base -->
+    <path d="M140 376h232v44H140z"/>
+    <path d="M118 424h276v10H118z"/>
+  </g>
+  <g fill="#0f6e73">
+    <!-- doorway and niches -->
+    <path d="M232 420v-50q0-22 24-22t24 22v50z"/>
+    <rect x="248" y="198" width="16" height="18" rx="8"/>
+    <rect x="247" y="242" width="18" height="20" rx="9"/>
+    <rect x="246" y="290" width="20" height="20" rx="10"/>
+  </g>
+</svg>

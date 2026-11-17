@@ -1,6 +1,6 @@
 /* Divya Desam Yatra — app logic. No framework. State lives in localStorage and, when the page
    is opened as a Claude artifact, is mirrored to the signed-in viewer's private store. */
-const APP_VERSION = '5.0 (17 Nov 2026)';
+const APP_VERSION = '5.1 (17 Nov 2026)';
 const SHORT = {};
 SHORT_RAW.trim().split('\n').forEach(l => { const [n,bk,bl,story,see,when] = l.split('|'); SHORT[+n] = {bk:bk.split(' '),bl,story,see:see.split(';'),when}; });
 Object.entries(BLESS_DEEP).forEach(([n,[bk,bl]]) => { SHORT[n] = Object.assign(SHORT[n]||{}, {bk:bk.split(' '),bl}); });
@@ -259,8 +259,9 @@ function vMe(){
    <p class="small muted" style="margin:10px 0 0">Your diary is stored: ${esc(cloudState)}. Each person who opens this app has a separate diary.</p></div>
   <h3>My yatra so far</h3><p class="muted small">${visited()} of 106 visited · ${T.filter(t=>D(t.n).s==='w').length} on the wish list</p>
   <div class="list">${list.map(t=>`<a class="t" href="#t-${t.n}"><span class="n">${t.n}</span><span><b>${esc(t.name)}</b><span class="sub">${D(t.n).d?esc(D(t.n).d)+' · ':''}${esc((D(t.n).note||'').slice(0,90))}</span></span><span class="side">${statusPill(t.n)}</span></a>`).join('')||'<p class="muted">Nothing marked yet. Open a temple and tap Mark visited.</p>'}</div>
-  <h3>Backup</h3><div class="box"><p class="small">Copy your diary as text to keep it safe or move it to another device. To restore, paste a backup below and tap Restore.</p><div class="row"><button id="bk">Copy my diary backup</button><button id="rs">Restore from pasted backup</button></div><textarea id="copybox" style="margin-top:8px" placeholder="Paste a backup here to restore" aria-label="Backup text"></textarea></div>
-  <h3>My corrections and feedback (${S.fb.length})</h3><div class="box">${S.fb.length?`<ul>${S.fb.map((f,i)=>`<li><b>${f.n?esc(f.n+'. '+byN(f.n).name):'General'}</b>: ${esc(f.text)} <button data-del="${i}" class="small" aria-label="Delete this correction">Delete</button></li>`).join('')}</ul><div class="row"><button id="fbc" class="pri">Copy all to send</button></div><p class="small muted" style="margin:8px 0 0">Paste into WhatsApp or email to the person who shared this app with you.</p>`:'<p class="muted" style="margin:0">Corrections you save on temple pages appear here.</p>'}
+  <h3>Backup</h3><div class="box"><p class="small">Copy your diary as text to keep it safe or move it to another device. To restore, paste a backup below and tap Restore.</p><div class="row"><button id="bk">Copy my diary backup</button><button id="rs">Restore from pasted backup</button></div><textarea id="copybox" style="margin-top:8px" placeholder="Paste a backup here to restore" aria-label="Backup text"></textarea>
+   <p class="small" style="margin:12px 0 6px">Or keep the backup as a file, for example in Files or iCloud Drive.</p><div class="row"><button id="bkf">Download backup as file</button><button id="rsf">Restore from file</button></div><input type="file" id="rsfile" accept=".json,application/json,text/plain" hidden aria-label="Choose a backup file"></div>
+  <h3>My corrections and feedback (${S.fb.length})</h3><div class="box">${S.fb.length?`<ul>${S.fb.map((f,i)=>`<li><b>${f.n?esc(f.n+'. '+byN(f.n).name):'General'}</b>: ${esc(f.text)} <button data-del="${i}" class="small" aria-label="Delete this correction">Delete</button></li>`).join('')}</ul><div class="row"><button id="fbc" class="pri">Copy all to send</button></div><p class="small muted" style="margin:8px 0 0">Paste into WhatsApp or email to the person who shared this app with you.</p><div class="links" style="margin-top:8px"><a href="${esc(correctionsMailto())}">Send by email</a>${repoUrl()?`<a href="${esc(repoUrl())}/issues" target="_blank" rel="noopener">Report on GitHub (Issues)</a>`:''}</div>`:'<p class="muted" style="margin:0">Corrections you save on temple pages appear here.</p>'}
    <label for="fbg">General feedback</label><textarea id="fbg" placeholder="Ideas, missing features, things that are hard to use"></textarea><div class="row" style="margin-top:8px"><button id="fbgs">Save feedback</button></div></div>
   <p style="margin-top:16px"><a href="#about">Sources and acknowledgements</a> · Version ${APP_VERSION}</p>`;
 }
@@ -357,9 +358,10 @@ function bind(r){
     $('#pw').addEventListener('input',e=>{S.profile.withWhom=e.target.value; save();});
     $('#tg').addEventListener('click',()=>{S.profile.gaudiya=!S.profile.gaudiya; save(); render();});
     $('#tb').addEventListener('click',()=>{S.profile.big=!S.profile.big; save(); render();});
-    $('#bk').addEventListener('click',()=>copy(JSON.stringify({app:'divyadesam-yatra',profile:S.profile,diary:S.diary,fb:S.fb}),'Backup copied'));
-    $('#rs').addEventListener('click',()=>{ try{ const o=JSON.parse($('#copybox').value); if(o.app!=='divyadesam-yatra') throw 0; S.profile=Object.assign(S.profile,o.profile||{}); S.diary=o.diary||{}; S.fb=o.fb||S.fb; save(); render(); toast('Diary restored'); }catch(e){ toast('That text is not a backup from this app'); } });
-    const fc=$('#fbc'); if(fc) fc.addEventListener('click',()=>copy('Divya Desam Yatra app – corrections from '+(S.profile.name||'a devotee')+'\n\n'+S.fb.map(f=>(f.n?f.n+'. '+byN(f.n).name:'General')+': '+f.text).join('\n\n'),'Corrections copied'));
+    $('#bk').addEventListener('click',()=>copy(backupText(),'Backup copied'));
+    $('#rs').addEventListener('click',()=>restoreBackup($('#copybox').value));
+    bindMeFiles();
+    const fc=$('#fbc'); if(fc) fc.addEventListener('click',()=>copy(correctionsText(),'Corrections copied'));
     document.querySelectorAll('[data-del]').forEach(x=>x.addEventListener('click',()=>{S.fb.splice(+x.dataset.del,1); save(); pushFeedback(); render();}));
     $('#fbgs').addEventListener('click',async()=>{ const v=$('#fbg').value.trim(); if(!v) return; S.fb.push({n:0,text:v,t:Date.now()}); save(); await pushFeedback(); render(); toast('Feedback saved'); });
   }
