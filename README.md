@@ -1,11 +1,12 @@
-# Divya Desam Yatra, version 5.0 (17 November 2026)
+# Divya Desam Yatra, version 5.1 (17 November 2026)
 
 A not-for-profit pilgrim's companion for the 108 Divya Desams, by Nishant Sukumaran.
 Live app (Claude artifact): https://claude.ai/artifact/Cnu65GRRpYMZBGbkyGHFzY
 
 ## Start here
 - Open `index.html` in any browser: that is the complete working app.
-- Rebuilding it on GitHub: read `META_PROMPT_for_Claude_Code.md` and follow it in Claude Code.
+- Published on GitHub Pages it installs on an iPhone or iPad home screen and works with no network (see below).
+- `META_PROMPT_for_Claude_Code.md` is the brief that produced this GitHub version (kept for the record).
 - `HANDOVER.md` explains how the app is built, what each version changed, the data decisions and the backlog.
 - `PROJECT_INSTRUCTIONS.md` is pasted into the claude.ai Project's custom instructions; it sets the tone and the sourcing rules.
 
@@ -23,6 +24,12 @@ Live app (Claude artifact): https://claude.ai/artifact/Cnu65GRRpYMZBGbkyGHFzY
 | `src/tamilwiki.js` | Facing, tank, tree, vimanam, pratyaksham from Tamil Wikipedia. |
 | `src/basemap.js`, `src/map.js` | Offline zoomable map, Google Maps routes, My Maps export. |
 | `src/extras.js` | Checklist, quiz, nearby ISKCON temples and abhimana sthalams. |
+| `src/config.js` | Two settings: the email address for "Send by email" and the repository address (both optional). |
+| `src/pwa.js` | Download and restore of backup files, email and Issues links for corrections, service worker registration and the "Update available" notice. |
+| `src/sw.js` | Service worker source. `build.py` stamps a version into it and writes `sw.js` beside `index.html`. |
+| `sw.js`, `manifest.webmanifest`, `icons/` | Generated worker, the web app manifest and the app icon (original gopuram drawing, `icons/icon.svg`). |
+| `vendor/leaflet.js` | Leaflet 1.9.4 (BSD-2), served from the site so the map works offline. |
+| `tools/make_icons.js` | Redraws the PNG icons from `icons/icon.svg` (needs Playwright; not needed for normal updates). |
 | `research/` | Source data collected for the app, and Khushi's v5 verse report (`khushi-raw.zip` is for checking only; it contains koyil.org commentary that must not be reused). |
 | `maps/` | The 106 earthly temples as KML and CSV for Google My Maps. |
 | `skill/divyadesam-tamil-scholar/SKILL.md` | The Claude skill used for all pasuram work. |
@@ -31,6 +38,26 @@ Live app (Claude artifact): https://claude.ai/artifact/Cnu65GRRpYMZBGbkyGHFzY
     python3 gen_wiki.py research/divyadesam-wiki-pack.json   # only if the Wikipedia pack changes
     python3 gen_v5.py research/divyadesam-verses-v5.json     # only if the verse collection changes
     python3 build.py                                         # always, after editing src/
+
+## Publishing on GitHub Pages
+One-time: in the repository on github.com open Settings, Pages, choose "Deploy from a branch", branch `main`, folder `/ (root)`, Save. The site appears at `https://<account>.github.io/<repository>/` after a minute or two.
+
+## How to publish an update
+1. Edit files in `src/` (never `index.html` or `sw.js`; both are generated).
+2. If it is a new release, change `APP_VERSION` at the top of `src/app.js` and add a line to the change log in `HANDOVER.md`.
+3. Run `python3 build.py`. It rewrites `index.html` and `sw.js`; the worker's version changes whenever anything in the app, the photographs or the icons changes.
+4. Open `index.html` to check, then commit everything and push to `main`. GitHub Pages republishes in a minute or two.
+5. People who installed the app see "Update available, tap to refresh" the next time they open it with a network. Their diary is untouched: it lives in the browser's storage under the key `divyadesam-yatra-v1`, which no update may change.
+
+To test offline behaviour on a computer, serve the folder (`python3 -m http.server`) and open `http://localhost:8000/`; the service worker does not run when `index.html` is opened straight from disk.
+
+## Installing on iPhone and iPad
+1. Open the site link in **Safari** (not inside WhatsApp or Gmail: use "Open in Safari" first).
+2. Wait until the home page has loaded, and stay on Wi-Fi for about half a minute so the 111 photographs are saved (about 5 MB).
+3. Tap the Share button (the square with an arrow), scroll down, tap **Add to Home Screen**, then **Add**.
+4. Open "Divya Desam" from the home screen. From now on it opens with no network.
+
+Good to know: on iPhone the home-screen app keeps its own storage, separate from Safari. A diary started in Safari does not appear in the home-screen app; move it once with My Yatra, Backup. Street-level map tiles need a network; offline, the map shows the built-in outline map, the pins and any streets already viewed.
 
 ## Rules that must not be broken
 - Keep the storage key `divyadesam-yatra-v1` and its format, so nobody loses their yatra diary.

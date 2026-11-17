@@ -55,6 +55,20 @@ For: Khushi (Claude Code rebuild for GitHub Pages) and for future update session
   - References changed by Khushi: 19 uses Periya Thirumozhi 9.2.10 (the only verse naming Nagai); 96 uses Perumal Thirumozhi 10.1. 95 (Thirukkurunthandakam 19) could not be cross-checked: koyil.org has no page for it.
 - **Reviewer task**: the report's table of word-level differences (about 35 verses, mostly single letters such as 69 அடியேண் for அடியேன், 71 மீமசை for மீமிசை, 65, 67, 72) lists likely typing slips in the e-text. They are shown as published; Malati or Hrishikesh should confirm each before it is corrected.
 
+## 0e. v5.1 (17 Nov 2026): GitHub Pages, installable, offline
+
+No temple fact, Tamil text, transliteration or translation was changed. `index.html` text was compared route by route with v5.0 and is identical apart from the version number and the new buttons.
+
+- **Build**: still one `index.html` from `build.py` (now also includes `src/config.js` first and `src/pwa.js` last) plus a generated `sw.js`. No framework, no bundler.
+- **Map**: Leaflet 1.9.4 is served from `vendor/leaflet.js` (no cdnjs). `MAP_TILES` is the OpenStreetMap URL. The offline vector base is always drawn underneath; when tiles load they cover it and the app's own state and city labels are hidden; with no network the vector base shows through. Tiles are requested only on http(s), so `index.html` opened from disk and the Claude artifact keep the vector map.
+- **Installable (PWA)**: `manifest.webmanifest` (name "Divya Desam Yatra", short name "Divya Desam", standalone, theme colour `--head` #6d1422, background `--bg` #fbf4e6), icons in `icons/` including the 180 px apple-touch-icon. The icon is an original gopuram outline in teal (`--rose`) and gold; no deity image.
+- **Offline**: `sw.js` stores the page, Leaflet, icons, manifest, all 111 photographs and the Google Fonts (stylesheet and every font file it lists) at install. Map tiles already viewed are kept (up to 600). Cache name is `ddy-app-<APP_VERSION>-<content hash>`; old app caches are deleted when a new version takes over. A new version waits until the person taps "Update available, tap to refresh".
+- **Storage**: unchanged. Key `divyadesam-yatra-v1`, same shape as section 3. `window.claude` code is untouched and still silent when absent. Copy-and-paste backup and restore unchanged; added "Download backup as file" and "Restore from file" (same JSON as the pasted backup, so the two are interchangeable).
+- **Downloads** (KML, CSV, checklist, backup) go through `saveFile()` in `src/pwa.js`: the artifact's `downloads` capability when inside Claude, otherwise an ordinary browser download (the share sheet in an installed iPhone app).
+- **Corrections**: the in-app list and "Copy all to send" are unchanged. Added "Send by email" (a mailto link; recipient is `CORRECTIONS_EMAIL` in `src/config.js`, blank until Nishant chooses an address) and "Report on GitHub (Issues)" (shown when the app runs on github.io, or when `REPO_URL` is set).
+- **Not put in the public repository**: `research/khushi-raw.zip` (contains koyil.org commentary, which must not be redistributed) and `EMAIL_to_Khushi.md` (a private email). Both are listed in `.gitignore`.
+- **Tested** in Chromium at 390 px and 820 px, light and dark, every route in the brief plus #map, #checklist, #quiz, #nearby, #t-68: no console errors, no sideways scrolling; offline reload and offline cold start; update notice and refresh; an existing v1 diary read, backed up to a file and restored. Not tested on a real iPhone or iPad: that check is still needed.
+
 ## 1. What exists today
 
 - **Live app (Claude artifact):** https://claude.ai/artifact/Cnu65GRRpYMZBGbkyGHFzY (private to Nishant until he shares it).
@@ -133,6 +147,7 @@ Because of these and because sources differ, the app's totals (66 standing, 22 s
 
 ## 7. Change log
 
+- 2026-11-17, v5.1: GitHub Pages build. Installable and offline (manifest, icon, service worker with update notice), Leaflet served locally, OpenStreetMap tiles over the offline base, backup and restore by file, email and GitHub Issues links for corrections. No content changes.
 - 2026-11-17, v5.0: verse text with transliteration and English study draft for the remaining 73 temples (Khushi's collection), so all 108 temple pages carry a pasuram; direct koyil.org and source links; reviewer source notes.
 - 2026-11-16, v1.0: first build. 108 core records, 16 full profiles, 16 pasurams, 7 Learn articles.
 - 2026-11-16, v4.0 (Opus 5.5): zoomable map with Google Maps routes and My Maps export, pasuram references for all 108 and verse text for 19 more temples, facing/tank/tree/pratyaksham from Tamil Wikipedia, checklist, quiz, ISKCON and abhimana sthalams.
