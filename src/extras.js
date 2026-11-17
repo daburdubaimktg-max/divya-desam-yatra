@@ -42,7 +42,7 @@ function bindChecklist(){
   document.querySelectorAll('[data-ck]').forEach(c=>c.addEventListener('change',()=>{ const n=+c.dataset.ck; setD(n,{s:c.checked?'v':'', d:D(n).d||''}); toast(c.checked?'Marked visited':'Unmarked'); }));
   $('#ck-copy').addEventListener('click',()=>copy(checklistText(),'Checklist copied'));
   $('#ck-dl').addEventListener('click',async()=>{ const data='Number,Divya Desam,Place,Region,Visited,Date\n'+T.filter(t=>t.n<=106).map(t=>[t.n,t.name,t.aka,t.reg,D(t.n).s==='v'?'Yes':'',D(t.n).d||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-    try{ const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null; if(!d) throw 0; await d.save({filename:'Divya Desam checklist.csv',data}); }catch(e){ copy(data,'Download not available here; copied instead'); } });
+    try{ await saveFile('Divya Desam checklist.csv',data,'text/csv'); }catch(e){ copy(data,'Download not available here; copied instead'); } });
 }
 /* ---------- quiz ---------- */
 let QZ=null;

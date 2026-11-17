@@ -1,8 +1,10 @@
 /* ---------- zoomable map (v4) ----------
    Leaflet with an offline vector base (coastline, countries, Indian state lines) because a Claude
-   artifact may not load map tiles. On GitHub Pages, set MAP_TILES to an OpenStreetMap tile URL to
-   add street detail (see HANDOVER). Every pin links to Google Maps for live navigation. */
-const MAP_TILES = '';   // e.g. 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' on GitHub Pages
+   artifact may not load map tiles. On GitHub Pages MAP_TILES adds OpenStreetMap street detail on
+   top of that base when there is a network; with no network (inside a temple) the vector base and
+   the app's own labels show through, plus any tiles already viewed (kept by sw.js).
+   Every pin links to Google Maps for live navigation. */
+const MAP_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';   // OpenStreetMap street detail when online; '' = offline vector base only
 const STATE_LABELS=[['Tamil Nadu',11.0,78.3],['Kerala',10.1,76.55],['Karnataka',14.6,75.9],['Andhra Pradesh',15.6,79.2],['Telangana',17.9,79.1],['Maharashtra',19.5,76.0],['Gujarat',22.6,71.5],['Uttar Pradesh',26.9,80.6],['Uttarakhand',30.1,79.2],['Nepal',28.3,84.0],['Sri Lanka',7.8,80.7],['Arabian Sea',14.5,70.5],['Bay of Bengal',15.0,86.5]];
 const MAP_PLACES=[['Chennai',13.08,80.27],['Tiruchirappalli',10.79,78.70],['Madurai',9.93,78.12],['Kochi',9.97,76.28],['Thiruvananthapuram',8.52,76.94],['Kumbakonam',10.96,79.38],['Tirunelveli',8.73,77.70],['Tirupati',13.63,79.42],['Kanchipuram',12.83,79.70],['Delhi',28.61,77.21],['Mumbai',19.08,72.88],['Bengaluru',12.97,77.59],['Hyderabad',17.39,78.49],['Kathmandu',27.72,85.32],['Lucknow',26.85,80.95],['Haridwar',29.95,78.16],['Mayiladuthurai',11.10,79.65],['Thanjavur',10.79,79.14],['Chengannur',9.32,76.61],['Nagercoil',8.18,77.41],['Thrissur',10.53,76.21],['Sirkazhi',11.24,79.74],['Nagapattinam',10.77,79.84],['Pokhara',28.21,83.99],['Mathura',27.49,77.67],['Dwarka',22.24,68.97],['Rameswaram',9.29,79.31]];
 const MAP_SETS={all:['All 106',()=>T.filter(t=>t.n<=106).map(t=>t.n)],south:['South India',()=>T.filter(t=>t.n<=95).map(t=>t.n)],delta:['Kaveri delta',()=>T.filter(t=>t.n<=40&&!t.grp.includes('NG')).map(t=>t.n)],nangur:['Thirunangur eleven',()=>T.filter(t=>t.grp.includes('NG')).map(t=>t.n).concat([28,34])],kanchi:['Kanchi and Chennai',()=>T.filter(t=>t.n>=43&&t.n<=64).map(t=>t.n)],tamra:['Nava Tirupati and far south',()=>T.filter(t=>t.n>=75&&t.n<=88).map(t=>t.n)],kerala:['Kerala',()=>T.filter(t=>t.n>=65&&t.n<=74).map(t=>t.n)],pandya:['Madurai region',()=>T.filter(t=>t.n>=88&&t.n<=95).map(t=>t.n)],north:['North and Nepal',()=>T.filter(t=>t.n>=96&&t.n<=104).map(t=>t.n)],andhra:['Tirumala and Ahobilam',()=>[105,106]]};
@@ -42,11 +44,13 @@ function pinIcon(n){ const s=D(n).s; return L.divIcon({className:'', iconSize:[3
 function mapInit(){
   const el=$('#lmap'); if(!el||!window.L) return;
   LMAP=L.map(el,{zoomSnap:0.5,minZoom:4,maxZoom:16,attributionControl:true,worldCopyJump:false,maxBounds:[[-5,55],[42,105]]});
-  if(MAP_TILES){ L.tileLayer(MAP_TILES,{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(LMAP); }
-  else {
-    L.geoJSON(BASEMAP.countries,{interactive:false,style:f=>({color:'#b59a72',weight:0.8,fillColor:f.properties.n==='India'?'#f6ead2':'#ece3d3',fillOpacity:1})}).addTo(LMAP);
-    L.geoJSON({type:'Feature',geometry:BASEMAP.states},{interactive:false,style:{color:'#c4a27a',weight:0.7,dashArray:'3 3',fill:false}}).addTo(LMAP);
-    LMAP.attributionControl.addAttribution('Boundaries: Natural Earth (via world-atlas, datamaps)');
+  // offline vector base is always drawn; street tiles (when reachable) cover it
+  L.geoJSON(BASEMAP.countries,{interactive:false,style:f=>({color:'#b59a72',weight:0.8,fillColor:f.properties.n==='India'?'#f6ead2':'#ece3d3',fillOpacity:1})}).addTo(LMAP);
+  L.geoJSON({type:'Feature',geometry:BASEMAP.states},{interactive:false,style:{color:'#c4a27a',weight:0.7,dashArray:'3 3',fill:false}}).addTo(LMAP);
+  LMAP.attributionControl.addAttribution('Boundaries: Natural Earth (via world-atlas, datamaps)');
+  if(MAP_TILES && location.protocol.indexOf('http')===0){
+    const tiles=L.tileLayer(MAP_TILES,{maxZoom:19,crossOrigin:true,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(LMAP);
+    tiles.on('tileload',()=>el.classList.add('has-tiles'));   // hide the app's own state and city labels once real tiles are showing
   }
   STATE_LABELS.forEach(([s,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:'stlbl',iconSize:[120,16],iconAnchor:[60,8],html:esc(s)})}).addTo(LMAP));
   MAP_PLACES.forEach(([s,la,lo])=>L.marker([la,lo],{interactive:false,keyboard:false,icon:L.divIcon({className:'citylbl',iconSize:[110,14],iconAnchor:[-4,7],html:'<i></i>'+esc(s)})}).addTo(LMAP));
@@ -61,7 +65,7 @@ function mapInit(){
   LMAP.fitBounds(viewBounds(MVIEW)); zoomCls();
   document.querySelectorAll('[data-mv]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault(); MVIEW=a.dataset.mv; document.querySelectorAll('[data-mv]').forEach(x=>x.classList.toggle('on',x===a)); LMAP.flyToBounds(viewBounds(MVIEW),{duration:0.6});}));
   const dl=async(kind)=>{ const msg=$('#dl-msg'); const data=kind==='kml'?buildKML():buildCSV(); const filename='Divya Desam Yatra - 108 temples.'+kind;
-    try{ const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null; if(!d) throw new Error('none'); await d.save({filename,data}); msg.textContent='Saved '+filename+'.'; }
+    try{ await saveFile(filename,data,kind==='kml'?'application/vnd.google-earth.kml+xml':'text/csv'); msg.textContent='Saved '+filename+'.'; }
     catch(e){ copy(data, kind.toUpperCase()+' copied. Paste into a new file named '+filename); msg.textContent='Download is not available here, so the file was copied instead. Paste it into a text file named '+filename+'.'; } };
   $('#dl-kml').addEventListener('click',()=>dl('kml')); $('#dl-csv').addEventListener('click',()=>dl('csv'));
 }
